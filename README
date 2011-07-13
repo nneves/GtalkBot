@@ -1,12 +1,10 @@
-GtalkBot is a Ruby Gtalk/XMPP client Bot that will connect to a server and will be listening to the authorized users messages and search for 
-specific 'mapped' commands in order to launch specific local tasks.
+GtalkBot is a Ruby Gtalk/XMPP client Bot that will connect to a server and will be listening to the authorized users messages and search for specific 'mapped' commands in order to launch specific local tasks.
 
-The main idea would be to use my GoogleTalk account from the mobile or even from the PC Desktop application, to remotely control my Linux NAS 
-server, for an easy way to start/stop/restart some application/service without having to login from SSH to do it.
+The main idea would be to use my GoogleTalk account from the mobile or even from the PC Desktop application, to remotely control my Linux NAS server, for an easy way to start/stop/restart some application/service without having to login from SSH to do it.
 
 This is my first Ruby application/script, so bare in mind that coding techniques may need to be improved.
-Would also like to add a special note to avoid calling direct Linux commands (there is a 'ls -la' example just as a proof-of-concept) 
-because it may suffer from some security issues, please read this:
+
+Would also like to add a special note to avoid calling direct Linux commands (there is a 'ls -la' example just as a proof-of-concept) because it may suffer from some security issues, please read this:
 
 http://stackoverflow.com/questions/4650636/forming-sanitary-shell-commands-or-system-calls-in-ruby
 
@@ -24,8 +22,7 @@ Adding additional commands can be done in the 'initialize_callbacks' function, j
     sendmessage("Hello World off Ruby! This sh1t r0ck5!")  
   end
 
-The callback name 'hello' will then be used as the command name! Please check the examples to see hot to send extra parameters with the 
-command!
+The callback name 'hello' will then be used as the command name! Please check the examples to see how to send extra parameters with the command!
 
 
 TOBEDONE:
