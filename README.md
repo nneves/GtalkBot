@@ -14,7 +14,8 @@ http://stackoverflow.com/questions/4650636/forming-sanitary-shell-commands-or-sy
 Before running the script it is necessary to change the user credentials in the config.ylm file.
 
 Running the script just requires to:
-    >ruby gtalkbot.rb
+
+    ruby gtalkbot.rb
 
 
 Adding additional commands can be done in the 'initialize_callbacks' function, just requires to add additional callback to the list:
