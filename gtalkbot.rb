@@ -123,16 +123,16 @@ class GtalkBot
     end
 
     # ...
-    add_callback(:dir) do |arg|
-      puts arg.inspect
-      if(arg[1] == nil)
-        arg[1] = "/home"
-      end
-      Dir.chdir arg[1] # need to escape path from malicious ;rm -rf injection
-      result = %x(ls -la)
-      sendmessage(">ls -la #{arg[1]}\r\n#{result}")     
-      puts result
-    end
+    #add_callback(:dir) do |arg|
+    #  puts arg.inspect
+    #  if(arg[1] == nil)
+    #    arg[1] = "/home"
+    #  end
+    #  Dir.chdir arg[1] # need to escape path from malicious ;rm -rf injection
+    #  result = %x(ls -la)
+    #  sendmessage(">ls -la #{arg[1]}\r\n#{result}")     
+    #  puts result
+    #end
 
   end
 
