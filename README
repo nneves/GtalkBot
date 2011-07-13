@@ -24,7 +24,7 @@ Adding additional commands can be done in the 'initialize_callbacks' function, j
     sendmessage("Hello World off Ruby! This sh1t r0ck5!")  
   end
 
-The callback name 'hello' will then be used ans the command name! Please check the examples to see hot to send extra parameters with the 
+The callback name 'hello' will then be used as the command name! Please check the examples to see hot to send extra parameters with the 
 command!
 
 
