@@ -94,13 +94,18 @@ class GtalkBot
         return
       end
     end
-    puts "NO CMD FOUND!"
+    puts "-> NO CMD FOUND!"
   end
 
   #-------------------------------------------------------------
   # Initialize Callbacks - to be customized
   #-------------------------------------------------------------
   def initialize_callbacks
+
+    # help
+    add_callback(:help) do |arg|
+      commandlist()
+    end
 
     # exit
     add_callback(:exit) do |arg|
@@ -134,12 +139,31 @@ class GtalkBot
     #  puts result
     #end
 
+    # Network
+    add_callback(:network) do |arg|
+      ethernet_interfaces()
+    end
+  
+    # List system active users
+    add_callback(:activeusers) do |arg|
+      active_users()
+    end   
+
   end
 
   #-------------------------------------------------------------
   # other auxiliar functions
   #--------------------------------------------------------------
-  
+
+  #--------------------------------------------------------------
+  # List Callback Commands
+  def commandlist()
+     sendmessage("Available commands:")
+     @callbacks.each do |name|
+        puts "--> #{name[0]}"
+        sendmessage("#{name[0]}")
+      end
+  end  
   #--------------------------------------------------------------
   # Gtalk Status Ready
   def SetStatusReady()
@@ -159,6 +183,29 @@ class GtalkBot
     return
   end
   #--------------------------------------------------------------
+  # Ethernet Interfaces configuration
+  def ethernet_interfaces
+    ifaces = /(eth\d)/.match(`ifconfig -a`).captures.inject([]) do |result, iface|
+      ifconfig = `ifconfig #{iface}`
+      ip = /inet\saddr:(\d+\.\d+\.\d+\.\d+)/.match(ifconfig).captures.last
+      mac = /HWaddr\s(\w+\:\w+\:\w+\:\w+\:\w+\:\w+)/.match(ifconfig).captures.last
+      puts "--> ip: #{ip} | mac: #{mac}"
+      sendmessage("ip: #{ip} | mac: #{mac}")
+    end
+  end
+  #--------------------------------------------------------------
+  def active_users
+    users =`who`.split("\n").collect do |user|
+      user_data = user.strip.split(/\s+/)
+      ip = /\((.*)\)/.match(user_data.last).captures.last
+      active_since = user_data[2] + ' ' + user_data[3]
+
+      puts "--> [#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]"
+      sendmessage("[#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]")
+    end
+  end
+  #--------------------------------------------------------------
+
 end
 
 EM.run {
