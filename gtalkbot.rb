@@ -94,7 +94,7 @@ class GtalkBot
         return
       end
     end
-    puts "-> NO CMD FOUND!"
+    puts "--> NO CMD FOUND!"
   end
 
   #-------------------------------------------------------------
@@ -145,19 +145,36 @@ class GtalkBot
     end
   
     # List system active users
-    add_callback(:activeusers) do |arg|
+    add_callback(:active_users) do |arg|
       active_users()
     end   
 
     # File System Usage
-    add_callback(:filesystemusage) do |arg|
+    add_callback(:file_system_usage) do |arg|
       file_system_usage()
     end
 
     # Processes Memory
-    add_callback(:procmem) do |arg|
-      processes_using_most_memory();
+    add_callback(:proc_mem) do |arg|
+      processes_using_most_memory()
     end
+
+    # Processes Cpu
+    add_callback(:proc_cpu) do |arg|
+       processes_using_most_cpu()
+    end
+
+    add_callback(:proc_zombie) do |arg|
+      zombie_processes()
+    end
+
+    #add_callback(:tcp_sockets_listen) do |arg|
+    #  listening_tcp_sockets()
+    #end
+
+    #add_callback(:tcp_sockets_connected) do |arg|
+    #  connected_tcp_sockets()
+    #end
   end
 
   #-------------------------------------------------------------
@@ -169,8 +186,9 @@ class GtalkBot
   def commandlist()
      sendmessage("Available commands:")
      @callbacks.each do |name|
-        puts "--> #{name[0]}"
-        sendmessage("#{name[0]}")
+        str = "#{name[0]}"
+        puts "--> "+str
+        sendmessage(str)
       end
   end  
   #--------------------------------------------------------------
@@ -201,14 +219,11 @@ class GtalkBot
         mount = vals[5..-1].join(" ")
         size = vals[1]
         used = vals[4]
-        puts("--> #{mount} | #{size} | #{used}")
-        sendmessage("#{mount} | #{size} | #{used}")
+        str = "#{mount} | #{size} | #{used}"
+        puts "--> "+str
+        sendmessage(str)
       end
-      #result
     end
-    # TODO: not sure what is going on single element arrays are packed into another array while multielement arrays
-    # are not. it was screwing up construction of xmpp message
-    #fsystem.count.eql?(1) ? fsystem.first : fsystem
   end
   #--------------------------------------------------------------
   # Ethernet Interfaces configuration
@@ -217,8 +232,9 @@ class GtalkBot
       ifconfig = `ifconfig #{iface}`
       ip = /inet\saddr:(\d+\.\d+\.\d+\.\d+)/.match(ifconfig).captures.last
       mac = /HWaddr\s(\w+\:\w+\:\w+\:\w+\:\w+\:\w+)/.match(ifconfig).captures.last
-      puts "--> ip: #{ip} | mac: #{mac}"
-      sendmessage("ip: #{ip} | mac: #{mac}")
+      str = "ip: #{ip} | mac: #{mac}"
+      puts "--> "+str
+      sendmessage(str)
     end
   end
   #--------------------------------------------------------------
@@ -227,31 +243,98 @@ class GtalkBot
       user_data = user.strip.split(/\s+/)
       ip = /\((.*)\)/.match(user_data.last).captures.last
       active_since = user_data[2] + ' ' + user_data[3]
-
-      puts "--> [#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]"
-      sendmessage("[#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]")
+      str = "[#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]"
+      puts "--> "+str
+      sendmessage(str)
     end
   end
   #--------------------------------------------------------------
   def processes_using_most_memory
     procs = `ps -eo pid,pcpu,pmem,comm`.split("\n")[1..-1].collect do |p|
       p_data = p.strip.split(/\s+/)
-      puts("--> pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
-      sendmessage(" pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+      {:pid => p_data[0], :command => p_data[3], :cpu => p_data[1].to_f, :memory => p_data[2].to_f}
     end
-    #largest_items_by_attribute(procs, :memory)
+    largest_items_by_attribute(procs, :memory)
+
+    for i in 1..10 do
+      str = "pid="+procs[i][:pid]+
+            " | cmd="+procs[i][:command]+
+            " | cpu="+procs[i][:cpu].to_s+
+            " | mem="+procs[i][:memory].to_s
+      puts "--> "+str
+      sendmessage(str)
+    end
   end
   #--------------------------------------------------------------
   def processes_using_most_cpu
     procs = `ps -eo pid,pcpu,pmem,comm`.split("\n")[1..-1].collect do |p|
       p_data = p.strip.split(/\s+/)
-      puts("--> pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
-      sendmessage(" pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+      {:pid => p_data[0], :command => p_data[3], :cpu => p_data[1].to_f, :memory => p_data[2].to_f}
     end
-    #largest_items_by_attribute(procs, :cpu)
+    largest_items_by_attribute(procs, :cpu)
+
+    for i in 1..10 do
+      str = "pid="+procs[i][:pid]+
+            " | cmd="+procs[i][:command]+
+            " | cpu="+procs[i][:cpu].to_s+
+            " | mem="+procs[i][:memory].to_s
+      puts "--> "+str
+      sendmessage(str)
+    end
+
   end
   #--------------------------------------------------------------
-
+  def largest_items_by_attribute(items, by_attr)
+    largest_items = items.sort_by {|i| -i[by_attr]}
+    largest_items = largest_items[0..4] if largest_items.count > 5
+    largest_items.count.eql?(1) ? largest_items.first : largest_items
+  end
+  #--------------------------------------------------------------
+  def zombie_processes
+    procs = `ps -eo pid,pcpu,pmem,state,comm`.split("\n")[1..-1].inject({}) do |result, p|
+      p_data = p.strip.split(/\s+/)
+      if (p_data[3].eql?('Z'))
+        str = "pid="+p_data[0]+
+              " | cmd="+p_data[4]+
+              " | cpu="+ p_data[1]+
+              " | mem="+ p_data[2]
+        puts "--> "+str
+        sendmessage(str)
+      end
+    end
+  end
+  #--------------------------------------------------------------
+  def services
+    `cat /etc/services`.split("\n").inject({}) do |result, serv|
+      unless /^#/.match(serv) or serv.eql?("")
+        serv_data = serv.split(/\t+/)
+        pp = serv_data[1].split("/")
+        result[pp[0]] = {:service => serv_data[0], :port => pp[0], :protocol => pp[1]}
+      end
+      result
+    end
+  end
+  #--------------------------------------------------------------
+  def socket_processes
+    `lsof  -i -n`.split("\n")[1..-1].inject({}) do |result, s|
+      unless /^lsof/.match(s)
+        s_data = s.strip.split(/\s+/)
+        m = /(.*)->.*/.match(s_data[7]) || /.*:(.*)/.match(s_data[7])
+        local_port = m.captures.first.split(":").last
+        result[local_port] = s_data[0]
+      end
+      result
+    end
+  end
+  #--------------------------------------------------------------
+  def listening_tcp_sockets
+    # TODO
+  end
+  #--------------------------------------------------------------
+  def connected_tcp_sockets
+    # TODO
+  end
+  #--------------------------------------------------------------
 end
 
 EM.run {
