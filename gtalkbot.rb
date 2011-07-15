@@ -149,6 +149,15 @@ class GtalkBot
       active_users()
     end   
 
+    # File System Usage
+    add_callback(:filesystemusage) do |arg|
+      file_system_usage()
+    end
+
+    # Processes Memory
+    add_callback(:procmem) do |arg|
+      processes_using_most_memory();
+    end
   end
 
   #-------------------------------------------------------------
@@ -183,6 +192,25 @@ class GtalkBot
     return
   end
   #--------------------------------------------------------------
+  # File System Usage
+  def file_system_usage
+    fs_type_result = `df -T`
+    fsystem = ['hfs', 'ext4', 'ext3', 'ext', 'ext2'].select{|fst| /\s#{fst}\s/.match(fs_type_result)}.inject([]) do |result, fst|
+      `df --type=#{fst} -H`.split("\n")[1..-1].each do |row|
+        vals = row.split(/\s+/)       
+        mount = vals[5..-1].join(" ")
+        size = vals[1]
+        used = vals[4]
+        puts("--> #{mount} | #{size} | #{used}")
+        sendmessage("#{mount} | #{size} | #{used}")
+      end
+      #result
+    end
+    # TODO: not sure what is going on single element arrays are packed into another array while multielement arrays
+    # are not. it was screwing up construction of xmpp message
+    #fsystem.count.eql?(1) ? fsystem.first : fsystem
+  end
+  #--------------------------------------------------------------
   # Ethernet Interfaces configuration
   def ethernet_interfaces
     ifaces = /(eth\d)/.match(`ifconfig -a`).captures.inject([]) do |result, iface|
@@ -203,6 +231,24 @@ class GtalkBot
       puts "--> [#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]"
       sendmessage("[#{user_data[0]}] user active since [#{active_since}] from ip [#{ip}]")
     end
+  end
+  #--------------------------------------------------------------
+  def processes_using_most_memory
+    procs = `ps -eo pid,pcpu,pmem,comm`.split("\n")[1..-1].collect do |p|
+      p_data = p.strip.split(/\s+/)
+      puts("--> pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+      sendmessage(" pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+    end
+    #largest_items_by_attribute(procs, :memory)
+  end
+  #--------------------------------------------------------------
+  def processes_using_most_cpu
+    procs = `ps -eo pid,pcpu,pmem,comm`.split("\n")[1..-1].collect do |p|
+      p_data = p.strip.split(/\s+/)
+      puts("--> pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+      sendmessage(" pid=#{p_data[0]} | cmd=#{p_data[3]} | cpu=#{p_data[1]} | mem=#{p_data[2]}")
+    end
+    #largest_items_by_attribute(procs, :cpu)
   end
   #--------------------------------------------------------------
 
